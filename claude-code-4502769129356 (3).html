@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Calculator</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #ffffff;
+        color: #202124;
+        font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+      }
+      body {
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 16px 76px;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      h1 {
+        margin: 0 0 28px;
+        font-size: clamp(44px, 9vw, 84px);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        text-align: center;
+      }
+
+      /* ---------- Calculator ---------- */
+      #calc {
+        width: 100%;
+        max-width: 340px;
+        padding: 16px;
+        background: #f1f3f4;
+        border-radius: 18px;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+      }
+      #screen {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 12px 16px;
+        margin-bottom: 14px;
+        text-align: right;
+        overflow: hidden;
+        min-height: 92px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+      }
+      #expr {
+        min-height: 20px;
+        font-size: 14px;
+        color: #80868b;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      #value {
+        font-size: 40px;
+        font-weight: 500;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      #keys {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+      }
+      #keys button {
+        height: 58px;
+        border: 0;
+        border-radius: 12px;
+        background: #ffffff;
+        color: #202124;
+        font-family: inherit;
+        font-size: 22px;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+        transition: background-color 0.12s ease, transform 0.05s ease;
+      }
+      #keys button:hover {
+        background: #e8eaed;
+      }
+      #keys button:active {
+        transform: scale(0.96);
+      }
+      #keys button.fn {
+        background: #dadce0;
+      }
+      #keys button.fn:hover {
+        background: #cfd2d6;
+      }
+      #keys button.op {
+        background: #d2e3fc;
+        color: #1967d2;
+        font-weight: 600;
+      }
+      #keys button.op:hover {
+        background: #c2d8fb;
+      }
+      #keys button.eq {
+        background: #1a73e8;
+        color: #ffffff;
+        font-weight: 600;
+      }
+      #keys button.eq:hover {
+        background: #1765cc;
+      }
+
+
+      /* ---------- Info section ---------- */
+      .info {
+        width: 100%;
+        max-width: 680px;
+        margin: 48px auto 0;
+        user-select: text;
+        -webkit-user-select: text;
+      }
+      .info h2 {
+        margin: 0 0 14px;
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .info p {
+        margin: 0 0 18px;
+        font-size: 16px;
+        line-height: 1.75;
+        color: #3c4043;
+      }
+
+      /* ---------- Footer bar ---------- */
+      footer {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 44px;
+        background: #000000;
+        display: flex;
+        align-items: center;
+        gap: 26px;
+        padding: 0 14px;
+        z-index: 5;
+      }
+      footer a {
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      footer a:hover {
+        text-decoration: underline;
+      }
+
+      /* ---------- Privacy modal ---------- */
+      #privacy-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.55);
+      }
+      #privacy-modal.open {
+        display: flex;
+      }
+      #privacy-box {
+        width: 100%;
+        max-width: 460px;
+        background: #ffffff;
+        border-radius: 14px;
+        padding: 24px;
+        line-height: 1.55;
+      }
+      #privacy-box h2 {
+        margin: 0 0 10px;
+        font-size: 20px;
+      }
+      #privacy-box p {
+        margin: 0 0 18px;
+        color: #5f6368;
+        font-size: 14px;
+      }
+      #privacy-close {
+        width: 100%;
+        padding: 11px;
+        border: 0;
+        border-radius: 8px;
+        background: #1a73e8;
+        color: #ffffff;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Calculator</h1>
+
+    <div id="calc">
+      <div id="screen">
+        <div id="expr"></div>
+        <div id="value">0</div>
+      </div>
+      <div id="keys">
+        <button class="fn" data-k="clear">AC</button>
+        <button class="fn" data-k="back">&#9003;</button>
+        <button class="fn" data-k="percent">%</button>
+        <button class="op" data-k="/">&divide;</button>
+
+        <button data-k="7">7</button>
+        <button data-k="8">8</button>
+        <button data-k="9">9</button>
+        <button class="op" data-k="*">&times;</button>
+
+        <button data-k="4">4</button>
+        <button data-k="5">5</button>
+        <button data-k="6">6</button>
+        <button class="op" data-k="-">&minus;</button>
+
+        <button data-k="1">1</button>
+        <button data-k="2">2</button>
+        <button data-k="3">3</button>
+        <button class="op" data-k="+">+</button>
+
+        <button class="fn" data-k="neg">&plusmn;</button>
+        <button data-k="0">0</button>
+        <button data-k=".">.</button>
+        <button class="eq" data-k="=">=</button>
+      </div>
+    </div>
+
+    <section class="info">
+      <h2>Why Calculators Matter in School</h2>
+      <p>
+        Calculators take care of the slow, repetitive part of arithmetic so students can focus on
+        understanding the problem in front of them. When a long multiplication or a messy decimal
+        no longer eats up the lesson, more time goes to the real learning: deciding which
+        operation to use, setting up an equation, and checking whether an answer makes sense. This
+        is especially useful in subjects like algebra, geometry, physics and chemistry, where the
+        calculation is only one small step in a bigger idea.
+      </p>
+      <p>
+        Research supports using them sensibly. A widely cited 2003 meta-analysis of calculator
+        studies in school mathematics found that students who used calculators as part of their
+        lessons generally kept their basic skills and tended to do better at problem solving than
+        students who did not. The National Council of Teachers of Mathematics also supports
+        calculator use alongside, not instead of, learning to calculate by hand. Calculators are
+        also allowed or even required in many school and college exams, so learning to use one
+        properly is a practical skill in its own right.
+      </p>
+      <p>
+        Calculators also help students build confidence and accuracy. Getting a quick, correct
+        result lets learners test their own estimates, spot mistakes, and try out several
+        &ldquo;what if&rdquo; ideas in a few seconds, which makes exploring numbers more fun and
+        less stressful. For students who find arithmetic frustrating, a calculator can keep them
+        engaged with the subject instead of giving up on it. The best approach is a balance:
+        practise mental maths and written methods to understand how numbers work, and use a
+        calculator to handle larger or more complex problems quickly and correctly.
+      </p>
+      <p>
+        Different kinds of calculators suit different stages of school. Basic calculators cover
+        everyday arithmetic, scientific calculators add functions such as powers, roots,
+        logarithms and trigonometry for older students, and graphing calculators can plot
+        equations so learners can see how changing a number changes a curve. Seeing a graph appear
+        instantly often makes abstract ideas in algebra and calculus much easier to picture.
+      </p>
+      <p>
+        Calculators can also make lessons fairer and more flexible. Students who find arithmetic
+        especially difficult are sometimes given calculators as a support, so they can show what
+        they understand about the bigger concept without being held back by the sums. Teachers
+        can also use them to set more realistic, real-world problems, such as working with
+        measurements, money or data, where the numbers are rarely small and tidy.
+      </p>
+    </section>
+
+    <section class="info">
+      <h2>A Short History of Calculators</h2>
+      <p>
+        People have been using tools to help with arithmetic for thousands of years. The abacus,
+        a frame of beads used to count and add, appeared in several ancient cultures and is still
+        used in some parts of the world today. In the early 1600s, the Scottish mathematician John
+        Napier published his work on logarithms, which turned hard multiplication into simpler
+        addition, and soon afterwards the slide rule was developed. Slide rules were carried by
+        engineers and students for around 350 years, right up until electronic calculators
+        replaced them in the 1970s.
+      </p>
+      <p>
+        The first mechanical calculating machines came in the 1600s. In 1642, a teenage Blaise
+        Pascal built an adding machine with geared wheels to help his father, who worked as a tax
+        collector. A few decades later, Gottfried Leibniz designed a machine that could also
+        multiply and divide. In the 1800s, machines such as the arithmometer became the first
+        calculators sold in large numbers to businesses, and Charles Babbage drew up plans for even
+        more ambitious engines that are often seen as early ancestors of the modern computer.
+      </p>
+      <p>
+        Electronic calculators arrived in the 1960s and were first large, expensive desk machines.
+        Over the early 1970s, advances in microchips shrank them to pocket size, and prices fell
+        quickly. In 1972, Hewlett-Packard launched the HP-35, widely regarded as the first
+        handheld scientific calculator, and the cheap scientific models that followed became
+        common in classrooms. In 1985, Casio released the fx-7000G, the first graphing calculator,
+        and today the same basic function is built into almost every phone and computer.
+      </p>
+    </section>
+
+    <section class="info">
+      <h2>How Calculators Are Made</h2>
+      <p>
+        A modern calculator is built around a small integrated circuit, a tiny chip that does
+        all the thinking. Inside, numbers are stored and processed in binary, the ones and zeros
+        that electronic circuits understand, and many calculators use a special decimal-friendly
+        form of binary so that results such as 0.1 + 0.2 come out the way people expect. The chip
+        is usually mounted directly onto a flat green circuit board and covered with a small drop
+        of protective black resin.
+      </p>
+      <p>
+        The keys sit on a rubber or plastic mat, and under each key is a small conductive pad.
+        Pressing a key connects two traces on the circuit board, and the chip scans the keypad
+        many times a second to work out which button was pressed. The results appear on a liquid
+        crystal display (LCD), where each digit is made from seven small segments that switch on
+        and off to form the numbers 0 to 9. Early calculators used glowing LED displays, which
+        used a lot of power, so the switch to low-power LCDs was a big step forward.
+      </p>
+      <p>
+        Because LCDs and modern chips use so little energy, many calculators can run on a tiny
+        solar cell, sometimes with a small backup battery. The case is typically made from plastic
+        shaped in a mould, and the whole thing is assembled in factories, often on automated lines
+        where the circuit board, keypad, display and case are put together and tested. The result
+        is a device that is light, cheap and rugged, but still able to do millions of operations
+        faster than any person could.
+      </p>
+    </section>
+
+    <footer>
+      <a href="#" id="terms-link">Terms &amp; Support</a>
+      <a href="#" id="privacy-link">Privacy Policy</a>
+    </footer>
+
+    <div id="privacy-modal">
+      <div id="privacy-box">
+        <h2>Privacy Policy</h2>
+        <p>
+          This calculator runs entirely in your browser. Your calculations are not stored, shared or
+          sent anywhere.
+        </p>
+        <button id="privacy-close">Close</button>
+      </div>
+    </div>
+
+    <script>
+      "use strict";
+
+      // Anti-debug / inspection protection retained
+      document.addEventListener(
+        "keydown",
+        function (e) {
+          const k = e.key.toLowerCase();
+          if (
+            e.key === "F12" ||
+            (e.ctrlKey && e.shiftKey && (k === "i" || k === "j" || k === "c")) ||
+            (e.ctrlKey && (k === "u" || k === "s" || k === "p"))
+          ) {
+            e.preventDefault();
+            return false;
+          }
+        },
+        { capture: true },
+      );
+      document.addEventListener("contextmenu", (e) => e.preventDefault());
+
+      /* =====================  CALCULATOR  ===================== */
+      const valueEl = document.getElementById("value");
+      const exprEl = document.getElementById("expr");
+
+      const SYMBOL = { "+": "+", "-": "\u2212", "*": "\u00d7", "/": "\u00f7" };
+      const MAX_DIGITS = 15;
+
+      let current = "0"; // what the user is typing / the shown result
+      let prev = null; // stored left-hand number
+      let op = null; // pending operator
+      let overwrite = false; // next digit starts a fresh number
+      let errored = false;
+      let exprText = "";
+
+      function fmt(n) {
+        if (!isFinite(n)) return null;
+        let s = Number(n.toPrecision(12)).toString(); // trims float noise (0.1+0.2)
+        return s;
+      }
+
+      function compute(a, o, b) {
+        switch (o) {
+          case "+":
+            return a + b;
+          case "-":
+            return a - b;
+          case "*":
+            return a * b;
+          case "/":
+            return b === 0 ? NaN : a / b;
+        }
+        return b;
+      }
+
+      function showError(msg) {
+        errored = true;
+        current = msg;
+        prev = null;
+        op = null;
+        overwrite = true;
+        exprText = "";
+        render();
+      }
+
+      function render() {
+        valueEl.textContent = current;
+        exprEl.textContent = exprText;
+        const len = current.length;
+        valueEl.style.fontSize = len > 14 ? "22px" : len > 11 ? "28px" : len > 8 ? "34px" : "40px";
+      }
+
+      function resetIfError() {
+        if (errored) {
+          errored = false;
+          current = "0";
+          overwrite = false;
+        }
+      }
+
+      function inputDigit(d) {
+        resetIfError();
+        if (overwrite) {
+          current = d;
+          overwrite = false;
+        } else if (current === "0") {
+          current = d;
+        } else if (current === "-0") {
+          current = "-" + d;
+        } else if (current.replace(/[-.]/g, "").length < MAX_DIGITS) {
+          current += d;
+        }
+        render();
+      }
+
+      function inputDot() {
+        resetIfError();
+        if (overwrite) {
+          current = "0.";
+          overwrite = false;
+        } else if (!current.includes(".")) {
+          current += ".";
+        }
+        render();
+      }
+
+      function setOperator(o) {
+        if (errored) return;
+        const cur = parseFloat(current);
+        if (op && !overwrite) {
+          const res = compute(prev, op, cur);
+          const s = fmt(res);
+          if (s === null) return showError("Can't divide by 0");
+          prev = parseFloat(s);
+          current = s;
+        } else if (!op) {
+          prev = cur;
+        }
+        op = o;
+        overwrite = true;
+        exprText = fmt(prev) + " " + SYMBOL[o];
+        render();
+      }
+
+      function equals() {
+        if (errored || !op) return;
+        const cur = parseFloat(current);
+        const res = compute(prev, op, cur);
+        const s = fmt(res);
+        if (s === null) return showError("Can't divide by 0");
+        exprText = fmt(prev) + " " + SYMBOL[op] + " " + fmt(cur) + " =";
+        current = s;
+        prev = null;
+        op = null;
+        overwrite = true;
+        render();
+      }
+
+      function percent() {
+        if (errored) return;
+        const s = fmt(parseFloat(current) / 100);
+        if (s === null) return;
+        current = s;
+        overwrite = true;
+        render();
+      }
+
+      function negate() {
+        if (errored) return;
+        if (current === "0") return;
+        current = current.startsWith("-") ? current.slice(1) : "-" + current;
+        render();
+      }
+
+      function backspace() {
+        if (errored || overwrite) return;
+        current = current.slice(0, -1);
+        if (current === "" || current === "-") current = "0";
+        render();
+      }
+
+      function clearAll() {
+        current = "0";
+        prev = null;
+        op = null;
+        overwrite = false;
+        errored = false;
+        exprText = "";
+        render();
+      }
+
+      function press(k) {
+        if (/^[0-9]$/.test(k)) inputDigit(k);
+        else if (k === ".") inputDot();
+        else if (k === "+" || k === "-" || k === "*" || k === "/") setOperator(k);
+        else if (k === "=") equals();
+        else if (k === "percent") percent();
+        else if (k === "neg") negate();
+        else if (k === "back") backspace();
+        else if (k === "clear") clearAll();
+      }
+
+      const keysEl = document.getElementById("keys");
+      keysEl.addEventListener("mousedown", (e) => e.preventDefault()); // keep focus off buttons
+      keysEl.addEventListener("click", function (e) {
+        const b = e.target.closest("button[data-k]");
+        if (b) press(b.dataset.k);
+      });
+
+      document.addEventListener("keydown", function (e) {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        const k = e.key;
+        if (/^[0-9]$/.test(k) || k === "." || k === "," ) {
+          press(k === "," ? "." : k);
+        } else if (k === "+" || k === "-" || k === "*" || k === "/") {
+          e.preventDefault();
+          press(k);
+        } else if (k === "Enter" || k === "=") {
+          e.preventDefault();
+          press("=");
+        } else if (k === "%") {
+          press("percent");
+        } else if (k === "Backspace") {
+          press("back");
+        } else if (k === "Escape" || k === "Delete") {
+          press("clear");
+        }
+      });
+
+      render();
+
+      /* =====================  PRIVACY POLICY  ===================== */
+      const modal = document.getElementById("privacy-modal");
+      document.getElementById("privacy-link").addEventListener("click", function (e) {
+        e.preventDefault();
+        modal.classList.add("open");
+      });
+      document.getElementById("privacy-close").addEventListener("click", function () {
+        modal.classList.remove("open");
+      });
+      modal.addEventListener("click", function (e) {
+        if (e.target === modal) modal.classList.remove("open");
+      });
+
+      /* =====================  "TERMS & SUPPORT" = MAGMA  ===================== */
+      const ROUTE_SOURCES = [
+        "https://raw.githubusercontent.com/dobberr/cfg/main/r.txt",
+        "https://cdn.jsdelivr.net/gh/dobberr/cfg@main/r.txt",
+        "https://raw.githack.com/dobberr/cfg/main/r.txt",
+        "https://cdn.statically.io/gh/dobberr/cfg/main/r.txt",
+      ];
+      const ROUTES_CACHE = "calc.routes.cache.v1";
+      let routesData = null;
+
+      function parseRoutes(text) {
+        const s = text.indexOf("{"),
+          e = text.lastIndexOf("}");
+        if (s === -1 || e <= s) throw new Error("Malformed routing file");
+        const raw = JSON.parse(text.slice(s, e + 1)),
+          out = {};
+        for (const k in raw) {
+          let url;
+          try {
+            url = atob(raw[k]);
+          } catch (_) {
+            throw new Error("Routing entry not decodable: " + k);
+          }
+          if (!/^https:\/\//.test(url)) throw new Error("Routing entry invalid: " + k);
+          out[k] = url;
+        }
+        if (!Object.keys(out).length) throw new Error("Routing file empty");
+        return out;
+      }
+
+      async function getRoutes() {
+        if (routesData) return routesData;
+        try {
+          const cached = localStorage.getItem(ROUTES_CACHE);
+          if (cached && /MANTLE_ROUTES/.test(cached)) routesData = parseRoutes(cached);
+        } catch (_) {}
+        for (const url of ROUTE_SOURCES) {
+          try {
+            const res = await fetch(url, { cache: "no-cache" });
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            const text = await res.text();
+            if (text.length < 40 || !/MANTLE_ROUTES/.test(text)) throw new Error("Unexpected response");
+            routesData = parseRoutes(text);
+            try {
+              localStorage.setItem(ROUTES_CACHE, text);
+            } catch (_) {}
+            return routesData;
+          } catch (e) {
+            console.warn("route source failed:", e && e.message ? e.message : e);
+          }
+        }
+        if (routesData) return routesData;
+        throw new Error("Routing file unreachable");
+      }
+
+      const SPOOF_OPTIONS = [
+        { title: "Google", icon: "https://www.google.com/favicon.ico" },
+        { title: "Google Classroom", icon: "https://www.gstatic.com/classroom/favicon.png" },
+        {
+          title: "Google Drive",
+          icon: "https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png",
+        },
+        {
+          title: "Google Docs",
+          icon: "https://ssl.gstatic.com/docs/documents/images/kix-favicon-2023q4.ico",
+        },
+      ];
+      const WINDOW_FEATURES =
+        "width=" +
+        screen.width +
+        ",height=" +
+        screen.height +
+        ",menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes,popup=yes";
+
+      function applySpoof(doc, spoof) {
+        doc.title = spoof.title;
+        let link = doc.querySelector("link[rel~='icon']");
+        if (!link) {
+          link = doc.createElement("link");
+          link.rel = "icon";
+          doc.head.appendChild(link);
+        }
+        link.href = spoof.icon;
+      }
+      function keepSpoofed(doc, spoof) {
+        applySpoof(doc, spoof);
+        const t = setInterval(function () {
+          try {
+            applySpoof(doc, spoof);
+          } catch (e) {
+            clearInterval(t);
+          }
+        }, 500);
+      }
+      function armCloseGuard(win) {
+        const guard = function (e) {
+          e.preventDefault();
+          e.returnValue = "";
+        };
+        win.addEventListener("beforeunload", guard);
+        win.onbeforeunload = guard;
+      }
+
+      let launching = false;
+      async function launchMagma() {
+        if (launching) return;
+        // Open the window immediately (inside the click) so popup blockers allow it
+        const win = window.open("about:blank", "_blank", WINDOW_FEATURES);
+        if (!win) {
+          alert("Please allow popups.");
+          return;
+        }
+        launching = true;
+
+        const d = win.document;
+        d.open();
+        d.write(
+          '<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#000;overflow:hidden;width:100vw;height:100vh;"></body></html>',
+        );
+        d.close();
+        armCloseGuard(win);
+        keepSpoofed(d, SPOOF_OPTIONS[Math.floor(Math.random() * SPOOF_OPTIONS.length)]);
+
+        try {
+          const routes = await getRoutes();
+          if (!routes.magma) throw new Error("No magma entry in routing file");
+
+          const frame = d.createElement("iframe");
+          frame.src = routes.magma;
+          frame.style.width = "100vw";
+          frame.style.height = "100vh";
+          frame.style.border = "none";
+          frame.style.display = "block";
+          frame.setAttribute(
+            "allow",
+            "fullscreen; pointer-lock; gamepad; keyboard-map; clipboard-read; clipboard-write; camera; microphone",
+          );
+          frame.setAttribute(
+            "sandbox",
+            "allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-pointer-lock",
+          );
+          frame.setAttribute("allowfullscreen", "true");
+          d.body.appendChild(frame);
+        } catch (e) {
+          console.warn(e);
+          try {
+            win.onbeforeunload = null;
+            win.close();
+          } catch (_) {}
+          alert("Couldn't load. Check your connection and try again.");
+        }
+        launching = false;
+      }
+
+      const termsLink = document.getElementById("terms-link");
+      termsLink.addEventListener("click", function (e) {
+        e.preventDefault();
+        launchMagma();
+      });
+      termsLink.addEventListener("pointerdown", function () { getRoutes().catch(() => {}); }, { once: true });
+    </script>
+  </body>
+</html>
